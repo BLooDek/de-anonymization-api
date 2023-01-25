@@ -10,8 +10,10 @@ offset = s.batchSize
 
 
 def check_transactions_(tx_num):
-    print(
-        f'checking transactions in page {round(offset/s.batchSize)} of {math.ceil(tx_num/s.batchSize)}')
+    print(f'found {tx_num} transactions. What you wish to do? \n1. check all transactions in depth {s.depth} \n2. check {s.batchSize} in {s.depth} depth')
+    x = input('chose option: \n')
+# print(
+#     f'checking transactions in page {round(offset/s.batchSize)} of {math.ceil(tx_num/s.batchSize)}')
 
 
 def call_blockchain_info():
@@ -25,7 +27,7 @@ def call_blockchain_info():
         data = r.json()
         print('\ndata:')
         print(f'Status code: {r.status_code}')
-        print(f'n of transactions {data["n_tx"] }')
+        print(f'n of transactions {data["n_tx"]}')
         # print(len(r.json()['txs']))
         x = input('check transactions in x [y]/[N]\n')
         if x == 'y':
@@ -33,11 +35,14 @@ def call_blockchain_info():
 
 
 def set_address():
-    newAddress = input('enter addres: \n')
-    s.walletAddress = newAddress
-
+    s.walletAddress = input('enter address: \n')
+def set_depth():
+    s.depth = int(input('enter new depth: \n'))
 
 # print(len(r._content))
+
+
+
 while (True):
     print(f'Wallet: {s.walletAddress} batch size: {s.batchSize}')
     _input = input(s.optionsString)
@@ -47,3 +52,5 @@ while (True):
         call_blockchain_info()
     elif _input == '3':
         set_address()
+    elif _input == '4':
+        set_depth()
