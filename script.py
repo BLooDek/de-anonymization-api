@@ -32,18 +32,19 @@ def check_transactions_walletexplorer(offset):
             for i in range(len(data)):
                 data[i]['outputs'] = list(filter(lambda x: ('label' in x.keys()), data[i]['outputs']))
         data = list(filter(lambda d: (len(d['outputs']) != 0), data))
-
+        return data
 
     except:
         print('error happened')
-    return data
+        return []
+
 
 def walletexplorer_loop_n(n):
     print('starting download...')
     db = []
-    time.sleep(1.1)
+    time.sleep(1)
     for x in range(0, n, 100):
-        time.sleep(1.1)
+        time.sleep(1)
         data = check_transactions_walletexplorer(x)
         print(f'downloading data for transactions {x}-{x + 100} of {n}')
         db.extend(data)
