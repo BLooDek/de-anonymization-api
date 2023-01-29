@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # libs
 import requests
 # default
@@ -6,7 +7,7 @@ import argparse
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-W', dest='wallet', type=str, help='Add wallet')
+parser.add_argument('-W', dest='wallet', type=str, help='Portfel do sprawdzenia')
 args = parser.parse_args()
 
 
@@ -15,7 +16,7 @@ class Config:
     offset = 100
     walletAddress = args.wallet
     wallet_id = None
-    optionsString = 'Enter: \n1. to quit \n2. to check wallet in blockchain info \n3.to set new address \n4. to set new depth\n'
+    optionsString = 'Wybierz: \n[1] wyjdź z programu \n[2] sprawdź portfel w blockchain.info \n[3] ustaw nowy adres \n[4] ustaw głębokość przeszukiwania transakcji\n'
     data = None
 
 
@@ -35,18 +36,19 @@ def check_transactions_walletexplorer(offset):
         return data
 
     except:
-        print('error happened')
+        print('!!! BŁĄD !!!')
+        exit(127)
         return []
 
 
 def walletexplorer_loop_n(n):
-    print('starting download...')
+    print('pobieranie danych...')
     db = []
     time.sleep(1)
     for x in range(0, n, 100):
         time.sleep(1)
         data = check_transactions_walletexplorer(x)
-        print(f'downloading data for transactions {x}-{x + 100} of {n}')
+        print(f'pobieranie danych dla transakcji {x}-{x + 100} z {n}')
         db.extend(data)
 
     save_file(s.walletAddress, db)
@@ -55,13 +57,14 @@ def walletexplorer_loop_n(n):
 
 def get_address_data():
 
-    print('downloading data...')
+    print('pobieranie danych...')
     r = requests.get(f'https://blockchain.info/rawaddr/{s.walletAddress}?limit=0')
     wallet_id = requests.get(
         f'http://www.walletexplorer.com/api/1/address-lookup?address={s.walletAddress}&caller=test').json()
 
     if r.status_code == 404 or not wallet_id['found']:
-        print("\nAddress not found!!! \n")
+        print("\nNie znaleziono adresu!!! \n")
+        exit(127)
     else:
         s.data = r.json()
         print(s.data)
@@ -69,15 +72,15 @@ def get_address_data():
 
         print()
         _input = input(
-            f'found {s.data["n_tx"]} transactions 1. check all 2. check  limited amount (provide number) 3. quit ')
+            f'znaleziono {s.data["n_tx"]} transakcji, wybierz: \n[1] sprawdź wszystkie (UWAGA: może być powolne!) \n[2] sprawdź ograniczoną ilość (podaj liczbę) \n[3] wyjdź z programu \nWybór: ')
         if _input == '1':
             walletexplorer_loop_n(s.data["n_tx"])
         if _input == '2':
-            x= int(input('provide number: \n'))
+            x= int(input('podaj ilość transakcji do przeszukania: '))
             walletexplorer_loop_n(x)
 
 def save_file(file_name, data):
-        print(f'saving to file {file_name}.txt')
+        print(f'zapisywanie do pliku {file_name}.txt')
         out = list(map(lambda x: f'tx {x["txid"]} [W]: ' +" ".join( list(map(lambda y: f'{y["label"]} ', x['outputs']))), data ))
         with open(f'{file_name}.txt', mode='wt', encoding='utf-8') as myfile:
             myfile.write('\n'.join(out))
@@ -85,4 +88,7 @@ def save_file(file_name, data):
 
 if args.wallet is not None:
     get_address_data()
+else:
+    print("Błąd: brak adresu do sprawdzenia. \nPodaj adres do sprawdzenia w argumencie -W.\nPrzykład: ./script.py -W 1AXZ1SwA2uW2cYoKmH23XgDyWGdEf3RwRB")
+    exit(127)
 

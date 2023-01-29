@@ -1,4 +1,4 @@
-## windows
+### Windows
 ### python -m venv venv
 ### .\venv\Scripts\activate
 ### pip install -r .\r.txt
@@ -11,6 +11,7 @@
 ### python .\script.py
 
 
-# Use:
-python .\script.py -W {wallet adr}
+# Uruchamianie:
+python script.py -W `adres`
 
+Uruchom skrypt bez argumentów aby wyświetlić pomoc.
