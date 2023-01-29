@@ -36,8 +36,7 @@ def check_transactions_walletexplorer(offset):
         return data
 
     except:
-        print('!!! BŁĄD !!!')
-        exit(127)
+        print('błąd przy pobieraniu danych')
         return []
 
 
