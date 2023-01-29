@@ -1,12 +1,11 @@
 # libs
 import requests
 # default
-import math
 import time
 import json
 
 import argparse
-import functools
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-W', dest='wallet', type=str, help='Add wallet')
@@ -29,7 +28,6 @@ s = Config()
 def check_transactions_walletexplorer(offset):
     r = requests.get(
         f'http://www.walletexplorer.com/api/1/wallet?wallet={s.wallet_id}&from={offset}&count=100&caller=panerurkar_p16@ce.vjti.ac.in')
-    # r = requests.get(f'http://www.walletexplorer.com/api/1/wallet?wallet=4f2bef8f274a0e23&from=112200&count=100&caller=panerurkar_p16@ce.vjti.ac.in')
     try:
         data = r.json()['txs']
         data = list(filter(lambda d: ('outputs' in d.keys()), data))
@@ -50,8 +48,25 @@ def check_transactions_walletexplorer(offset):
 def walletexplorer_loop():
     db = []
     time.sleep(1.1)
-    # for x in range(0, s.data['n_tx'], 100):
-    for x in range(0, 300, 100):
+    for x in range(0, s.data['n_tx'], 100):
+        time.sleep(1.1)
+        data = check_transactions_walletexplorer(x)
+        print(f'downloading data for transactions {x}-{x + 100} of {s.data["n_tx"]}')
+        db.extend(data)
+
+
+    with open(f'{s.walletAddress}.json', 'a', encoding='utf-8') as f:
+        json.dump(db, f)
+
+    _input = input(
+        'download complete, parse file now? [y]/[N]')
+    if _input == 'y':
+        parse_json(f'{s.walletAddress}.json')
+
+def walletexplorer_loop_n(n):
+    db = []
+    time.sleep(1.1)
+    for x in range(0, n, 100):
         time.sleep(1.1)
         data = check_transactions_walletexplorer(x)
         print(f'downloading data for transactions {x}-{x + 100} of {s.data["n_tx"]}')
@@ -87,20 +102,17 @@ def get_address_data():
             f'found {s.data["n_tx"]} transactions 1. check all 2. check  limited amount (provide number) 3. quit ')
         if _input == '1':
             walletexplorer_loop()
-
+        if _input == '2':
+            x= int(input('provide number: \n'))
+            walletexplorer_loop_n(x)
 
 def parse_json(file_name):
     with open(file_name) as json_file:
         print(json_file)
         data = json.load(json_file)
-        z = list(map(lambda x: f'tx {x["txid"]} [W]: ' +" ".join( list(map(lambda y: f'{y["label"]} ', x['outputs']))), data ))
-        print(z)
-
-        # labels = functools.reduce(lambda a, b: a+b, map(lambda x: f'{x.label}', data))
-        # print(functools.reduce(lambda a, b: a + b, lis))
-        # result =  map(lambda x: f'{data["txid"]} [W] {labels}', data)
-        # print(result)
-
+        out = list(map(lambda x: f'tx {x["txid"]} [W]: ' +" ".join( list(map(lambda y: f'{y["label"]} ', x['outputs']))), data ))
+        with open(f'{file_name.split(".")[0]}.txt', mode='wt', encoding='utf-8') as myfile:
+            myfile.write('\n'.join(out))
 
 
 if args.wallet is not None:
