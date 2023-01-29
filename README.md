@@ -10,3 +10,7 @@
 ### pip install -r .\r.txt
 ### python .\script.py
 
+
+# Use:
+python .\script.py -W {wallet adr}
+
