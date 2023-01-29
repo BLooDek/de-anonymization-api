@@ -2,14 +2,11 @@
 import requests
 # default
 import time
-import json
-
 import argparse
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-W', dest='wallet', type=str, help='Add wallet')
-parser.add_argument('-P', dest='parse', type=str, help='Parse json')
 args = parser.parse_args()
 
 
@@ -41,45 +38,17 @@ def check_transactions_walletexplorer(offset):
         print('error happened')
     return data
 
-
-
-
-# 4f2bef8f274a0e23
-def walletexplorer_loop():
-    db = []
-    time.sleep(1.1)
-    for x in range(0, s.data['n_tx'], 100):
-        time.sleep(1.1)
-        data = check_transactions_walletexplorer(x)
-        print(f'downloading data for transactions {x}-{x + 100} of {s.data["n_tx"]}')
-        db.extend(data)
-
-
-    with open(f'{s.walletAddress}.json', 'a', encoding='utf-8') as f:
-        json.dump(db, f)
-
-    _input = input(
-        'download complete, parse file now? [y]/[N]')
-    if _input == 'y':
-        parse_json(f'{s.walletAddress}.json')
-
 def walletexplorer_loop_n(n):
+    print('starting download...')
     db = []
     time.sleep(1.1)
     for x in range(0, n, 100):
         time.sleep(1.1)
         data = check_transactions_walletexplorer(x)
-        print(f'downloading data for transactions {x}-{x + 100} of {s.data["n_tx"]}')
+        print(f'downloading data for transactions {x}-{x + 100} of {n}')
         db.extend(data)
 
-
-    with open(f'{s.walletAddress}.json', 'a', encoding='utf-8') as f:
-        json.dump(db, f)
-
-    _input = input(
-        'download complete, parse file now? [y]/[N]')
-    if _input == 'y':
-        parse_json(f'{s.walletAddress}.json')
+    save_file(s.walletAddress, db)
 
 
 
@@ -101,21 +70,18 @@ def get_address_data():
         _input = input(
             f'found {s.data["n_tx"]} transactions 1. check all 2. check  limited amount (provide number) 3. quit ')
         if _input == '1':
-            walletexplorer_loop()
+            walletexplorer_loop_n(s.data["n_tx"])
         if _input == '2':
             x= int(input('provide number: \n'))
             walletexplorer_loop_n(x)
 
-def parse_json(file_name):
-    with open(file_name) as json_file:
-        print(json_file)
-        data = json.load(json_file)
+def save_file(file_name, data):
+        print(f'saving to file {file_name}.txt')
         out = list(map(lambda x: f'tx {x["txid"]} [W]: ' +" ".join( list(map(lambda y: f'{y["label"]} ', x['outputs']))), data ))
-        with open(f'{file_name.split(".")[0]}.txt', mode='wt', encoding='utf-8') as myfile:
+        with open(f'{file_name}.txt', mode='wt', encoding='utf-8') as myfile:
             myfile.write('\n'.join(out))
 
 
 if args.wallet is not None:
     get_address_data()
-elif args.parse is not None:
-    parse_json(args.parse)
+
