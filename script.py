@@ -2,88 +2,108 @@
 import requests
 # default
 import math
+import time
 import json
+
+import argparse
+import functools
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-W', dest='wallet', type=str, help='Add wallet')
+parser.add_argument('-P', dest='parse', type=str, help='Parse json')
+args = parser.parse_args()
 
 
 class Config:
-    depth = 1
     batchSize = 100
-    walletAddress = 'bc1qm34lsc65zpw79lxes69zkqmk6ee3ewf0j77s3h'
+    offset = 100
+    walletAddress = args.wallet
     wallet_id = None
     optionsString = 'Enter: \n1. to quit \n2. to check wallet in blockchain info \n3.to set new address \n4. to set new depth\n'
     data = None
 
+
 s = Config()
-offset = s.batchSize
 
 
-def check_transactions_walletexplorer():
-    print(s.wallet_id)
-    r = requests.get(f'http://www.walletexplorer.com/api/1/wallet?wallet={s.wallet_id}&from=0&count=100&caller=panerurkar_p16@ce.vjti.ac.in')
-    data = r.json()['txs']
-    data = list(filter(lambda d: ('outputs' in d.keys()), data))
-    if len(data) != 0:
-        for i in range(len(data)):
-            data[i]['outputs'] = list(filter(lambda x: ('label' in x.keys()), data[i]['outputs']))
-    data = list(filter(lambda d: (len(d['outputs']) != 0), data))
-    # print(data)
-    # print(json.dumps(data))
-    with open('data.json', 'w', encoding='utf-8') as f:
-        json.dump(data, f)
+def check_transactions_walletexplorer(offset):
+    r = requests.get(
+        f'http://www.walletexplorer.com/api/1/wallet?wallet={s.wallet_id}&from={offset}&count=100&caller=panerurkar_p16@ce.vjti.ac.in')
+    # r = requests.get(f'http://www.walletexplorer.com/api/1/wallet?wallet=4f2bef8f274a0e23&from=112200&count=100&caller=panerurkar_p16@ce.vjti.ac.in')
+    try:
+        data = r.json()['txs']
+        data = list(filter(lambda d: ('outputs' in d.keys()), data))
+        if len(data) != 0:
+            for i in range(len(data)):
+                data[i]['outputs'] = list(filter(lambda x: ('label' in x.keys()), data[i]['outputs']))
+        data = list(filter(lambda d: (len(d['outputs']) != 0), data))
 
-    # print(data)
-    # if len(data) != 0:
-    #     for i in range(len(data)):
-    #         if 'outputs' in data[i].keys():
-    #             print(data[i]['outputs'])
-    #         pass
 
-        # print(list(filter(lambda d: ('outputs' in d.keys()), data)))
-        # result = list(filter(lambda x: (x % 13 == 0), my_list))
-        # print(r.json()['txs'])
+    except:
+        print('error happened')
+    return data
+
+
+
+
+# 4f2bef8f274a0e23
+def walletexplorer_loop():
+    db = []
+    time.sleep(1.1)
+    # for x in range(0, s.data['n_tx'], 100):
+    for x in range(0, 300, 100):
+        time.sleep(1.1)
+        data = check_transactions_walletexplorer(x)
+        print(f'downloading data for transactions {x}-{x + 100} of {s.data["n_tx"]}')
+        db.extend(data)
+
+
+    with open(f'{s.walletAddress}.json', 'a', encoding='utf-8') as f:
+        json.dump(db, f)
+
+    _input = input(
+        'download complete, parse file now? [y]/[N]')
+    if _input == 'y':
+        parse_json(f'{s.walletAddress}.json')
 
 
 
 def get_address_data():
+
     print('downloading data...')
     r = requests.get(f'https://blockchain.info/rawaddr/{s.walletAddress}?limit=0')
-    wallet_id = requests.get(f'http://www.walletexplorer.com/api/1/address-lookup?address={s.walletAddress}&caller=test').json()
-
+    wallet_id = requests.get(
+        f'http://www.walletexplorer.com/api/1/address-lookup?address={s.walletAddress}&caller=test').json()
 
     if r.status_code == 404 or not wallet_id['found']:
         print("\nAddress not found!!! \n")
     else:
         s.data = r.json()
+        print(s.data)
         s.wallet_id = wallet_id['wallet_id']
-        print('\ndata:')
-        # print(f'Status code: {r.status_code}')
-        print(f'n of transactions {s.data["n_tx"]}')
-        # print(len(r.json()['txs']))
-        # x = input('check transactions in x [y]/[N]\n')
-        # if x == 'y':
-        #     check_transactions_(s.data["n_tx"])
-        check_transactions_walletexplorer()
+
+        print()
+        _input = input(
+            f'found {s.data["n_tx"]} transactions 1. check all 2. check  limited amount (provide number) 3. quit ')
+        if _input == '1':
+            walletexplorer_loop()
 
 
-def set_address():
-    s.walletAddress = input('enter address: \n')
-def set_depth():
-    s.depth = int(input('enter new depth: \n'))
+def parse_json(file_name):
+    with open(file_name) as json_file:
+        print(json_file)
+        data = json.load(json_file)
+        z = list(map(lambda x: f'tx {x["txid"]} [W]: ' +" ".join( list(map(lambda y: f'{y["label"]} ', x['outputs']))), data ))
+        print(z)
 
-# print(len(r._content))
+        # labels = functools.reduce(lambda a, b: a+b, map(lambda x: f'{x.label}', data))
+        # print(functools.reduce(lambda a, b: a + b, lis))
+        # result =  map(lambda x: f'{data["txid"]} [W] {labels}', data)
+        # print(result)
 
 
 
-while (True):
-    print(f'Wallet: {s.walletAddress} batch size: {s.batchSize}')
-    _input = input(s.optionsString)
-    if _input == '1':
-        break
-    elif _input == '2':
-        get_address_data()
-    elif _input == '3':
-        set_address()
-    elif _input == '4':
-        set_depth()
-    elif _input == '5':
-        check_transactions_(5)
+if args.wallet is not None:
+    get_address_data()
+elif args.parse is not None:
+    parse_json(args.parse)
