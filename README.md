@@ -6,9 +6,9 @@
 
 ## Mac / Linux
 ### python3 -m venv venv
-### source .\venv\bin\activate
-### pip install -r .\r.txt
-### python .\script.py
+### source ./venv/bin/activate
+### pip install -r ./r.txt
+### python ./script.py
 
 
 # Uruchamianie:
